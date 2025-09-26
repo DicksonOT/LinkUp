@@ -17,7 +17,6 @@ const upsertStreamUser = async (userData) => {
     } catch (error) {
         console.error('Error creating/updating Stream user:', error);
     }
-    
 }
  const generateStreamToken = (userId) => {
     try {

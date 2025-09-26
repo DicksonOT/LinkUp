@@ -89,7 +89,7 @@ const login = async (req, res) => {
                 sameSite: 'strict'
             });
  
-            res.status(200).json({ success:true, user, message: 'Login successful' });
+            res.status(200).json({ success:true, user, token, message: 'Login successful' });
   } catch (error) {
     console.error('Error during user login:', error);
     res.status(500).json({ message: 'Server error' });
@@ -115,7 +115,7 @@ const onBoard = async (req, res) => {
                     !nativeLang && 'nativeLang',
                     !learningLang && 'learningLang',
                     !location && 'location',    
-                ].fillter(Boolean)
+                ].filter(Boolean)
              });
         }
 

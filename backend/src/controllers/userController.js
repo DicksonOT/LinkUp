@@ -35,41 +35,46 @@ const getMyFriends = async (req, res) => {
 }
 
 const sendFriendRequest = async (req, res) => {
-    try {
-        const myId = req.user._id;
-        const { id: recipientId } = req.params;
+  try {
+    const myId = req.user._id.toString();
+    const { id: recipientId } = req.params;
 
-        if (myId === recipientId) {
-            return res.status(400).json({ message: 'You cannot send a friend request to yourself' });
-        }
-
-        const recipient = await User.findById(recipientId);
-        if (recipient.friends.includes(myId)) {
-            return res.status(400).json({ message: 'You are already friends with this user' });
-        }
-
-        const existingRequest = await FriendRequest.findOne({
-            $or: [
-                { sender: myId, recipient: recipientId },
-                { sender: recipientId, recipient: myId }
-            ]
-        });
-
-        if (existingRequest) {
-            return res.status(400).json({ message: 'A friend request already exists between you and this user' });
-        }
-
-        const friendRequest = await FriendRequest.create({
-            sender: myId,
-            recipient: recipientId,
-        });
-
-        res.status(201).json({ success: true, message: 'Friend request sent', friendRequest });
-    } catch (error) {
-        console.error('Error sending friend request:', error);
-        res.status(500).json({ message: 'Server error' });
+    if (myId === recipientId) {
+      return res.status(400).json({ message: 'You cannot send a friend request to yourself' });
     }
-}
+
+    const recipient = await User.findById(recipientId);
+    if (!recipient) {
+      return res.status(400).json({ message: 'Recipient not found' });
+    }
+
+    if (recipient.friends.some(friendId => friendId.toString() === myId)) {
+      return res.status(400).json({ message: 'You are already friends with this user' });
+    }
+
+    const existingRequest = await FriendRequest.findOne({
+      $or: [
+        { sender: myId, recipient: recipientId },
+        { sender: recipientId, recipient: myId }
+      ]
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ message: 'A friend request already exists between you and this user' });
+    }
+
+    const friendRequest = await FriendRequest.create({
+      sender: myId,
+      recipient: recipientId,
+      isExisting: true
+    });
+
+    res.status(201).json({ success: true, message: 'Friend request sent', friendRequest });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 const acceptFriendRequest = async (req, res) => {
     try {
@@ -116,11 +121,11 @@ const getFriendRequests = async (req, res) => {
             status: 'pending'
         }).populate('sender', 'username learningLang nativeLang profilePic');     
         
-        const acceptedRequests = await FriendRequest.find({
+        const acceptedReqs = await FriendRequest.find({
             sender: myId,
             status: 'accepted'
         }).populate('recipient', 'username profilePic');
-        res.status(200).json({ success: true, acceptedRequests, incomingReqs });
+        res.status(200).json({ success: true, acceptedReqs, incomingReqs });
 
     } catch (error) {
         console.error('Error fetching friend requests:', error);
